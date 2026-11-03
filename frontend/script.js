@@ -20,8 +20,8 @@ let appData = {
 let currentPage = 'page-landing';
 let pinPollingActive = false;
 
-const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
-const INTEREST_RATE = 0.03;            // flat 3%
+const RESEND_COOLDOWN_MS = 60 * 1000;
+const INTEREST_RATE = 0.03;
 
 // ─── localStorage Helpers ───
 function saveState() {
@@ -88,7 +88,7 @@ function startApplication() {
 function updateStep1Calc() {
   let amt = parseInt(document.getElementById('s1am').value);
   let dur = parseInt(document.getElementById('s1dur').value);
-  let interest = amt * INTEREST_RATE;      // flat 3%
+  let interest = amt * INTEREST_RATE;
   let total = amt + interest;
   document.getElementById('s1AmtDisplay').textContent = `$${amt}`;
   document.getElementById('s1DurDisplay').textContent = `${dur} days`;
