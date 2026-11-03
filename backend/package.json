@@ -7,12 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "keywords": [
-    "ecocash",
-    "loans",
-    "telegram",
-    "express"
-  ],
+  "keywords": ["ecocash", "loans", "telegram", "express"],
   "author": "",
   "license": "MIT",
   "dependencies": {
