@@ -1,22 +1,16 @@
 {
   "name": "ecocash-backend",
   "version": "1.0.0",
-  "description": "EcoCash Zimbabwe loan application backend with Telegram admin approvals",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "keywords": ["ecocash", "loans", "telegram", "express"],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "node-fetch": "^2.6.7"
   },
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "engines": { "node": ">=14.0.0" }
 }
